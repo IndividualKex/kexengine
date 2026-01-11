@@ -335,4 +335,252 @@ mod tests {
         let result = deserialize(&[b'K', b'E', b'X']);
         assert!(matches!(result, Err(PersistenceError::TruncatedData)));
     }
+
+    // Round-trip tests for _kexd files
+    fn load_test_file(name: &str) -> Vec<u8> {
+        let path = format!("test-data/{}.kex", name);
+        std::fs::read(&path).unwrap_or_else(|e| panic!("Failed to load {}: {}", path, e))
+    }
+
+    fn assert_documents_equal(original: &Document, restored: &Document, context: &str) {
+        // Graph structure
+        assert_eq!(
+            original.graph.node_ids, restored.graph.node_ids,
+            "{}: node_ids mismatch",
+            context
+        );
+        assert_eq!(
+            original.graph.node_types, restored.graph.node_types,
+            "{}: node_types mismatch",
+            context
+        );
+        assert_eq!(
+            original.graph.port_ids, restored.graph.port_ids,
+            "{}: port_ids mismatch",
+            context
+        );
+        assert_eq!(
+            original.graph.edge_ids, restored.graph.edge_ids,
+            "{}: edge_ids mismatch",
+            context
+        );
+
+        // Next IDs
+        assert_eq!(
+            original.next_node_id, restored.next_node_id,
+            "{}: next_node_id mismatch",
+            context
+        );
+        assert_eq!(
+            original.next_port_id, restored.next_port_id,
+            "{}: next_port_id mismatch",
+            context
+        );
+        assert_eq!(
+            original.next_edge_id, restored.next_edge_id,
+            "{}: next_edge_id mismatch",
+            context
+        );
+
+        // Data maps
+        assert_eq!(
+            original.scalars.len(),
+            restored.scalars.len(),
+            "{}: scalars count mismatch",
+            context
+        );
+        for (key, value) in &original.scalars {
+            let restored_value = restored
+                .scalars
+                .get(key)
+                .unwrap_or_else(|| panic!("{}: scalar key {} not found", context, key));
+            assert!(
+                (value - restored_value).abs() < 1e-6,
+                "{}: scalar {} mismatch: {} vs {}",
+                context,
+                key,
+                value,
+                restored_value
+            );
+        }
+
+        assert_eq!(
+            original.vectors.len(),
+            restored.vectors.len(),
+            "{}: vectors count mismatch",
+            context
+        );
+        for (key, value) in &original.vectors {
+            let restored_value = restored
+                .vectors
+                .get(key)
+                .unwrap_or_else(|| panic!("{}: vector key {} not found", context, key));
+            assert!(
+                (value.x - restored_value.x).abs() < 1e-6,
+                "{}: vector {}.x mismatch",
+                context,
+                key
+            );
+            assert!(
+                (value.y - restored_value.y).abs() < 1e-6,
+                "{}: vector {}.y mismatch",
+                context,
+                key
+            );
+            assert!(
+                (value.z - restored_value.z).abs() < 1e-6,
+                "{}: vector {}.z mismatch",
+                context,
+                key
+            );
+        }
+
+        assert_eq!(
+            original.flags.len(),
+            restored.flags.len(),
+            "{}: flags count mismatch",
+            context
+        );
+        for (key, value) in &original.flags {
+            let restored_value = restored
+                .flags
+                .get(key)
+                .unwrap_or_else(|| panic!("{}: flag key {} not found", context, key));
+            assert_eq!(
+                value, restored_value,
+                "{}: flag {} mismatch",
+                context, key
+            );
+        }
+
+        // Keyframes
+        assert_eq!(
+            original.keyframes.len(),
+            restored.keyframes.len(),
+            "{}: keyframes count mismatch",
+            context
+        );
+        assert_eq!(
+            original.keyframe_ranges.len(),
+            restored.keyframe_ranges.len(),
+            "{}: keyframe_ranges count mismatch",
+            context
+        );
+    }
+
+    #[test]
+    fn circuit_kexd_roundtrip() {
+        let data = load_test_file("circuit_kexd");
+        let original = deserialize(&data).expect("Failed to deserialize circuit_kexd");
+
+        let serialized = serialize(&original);
+        let restored = deserialize(&serialized).expect("Failed to deserialize round-tripped data");
+
+        assert_documents_equal(&original, &restored, "circuit_kexd");
+    }
+
+    #[test]
+    fn switch_kexd_roundtrip() {
+        let data = load_test_file("switch_kexd");
+        let original = deserialize(&data).expect("Failed to deserialize switch_kexd");
+
+        let serialized = serialize(&original);
+        let restored = deserialize(&serialized).expect("Failed to deserialize round-tripped data");
+
+        assert_documents_equal(&original, &restored, "switch_kexd");
+    }
+
+    #[test]
+    fn all_types_kexd_roundtrip() {
+        let data = load_test_file("all_types_kexd");
+        let original = deserialize(&data).expect("Failed to deserialize all_types_kexd");
+
+        let serialized = serialize(&original);
+        let restored = deserialize(&serialized).expect("Failed to deserialize round-tripped data");
+
+        assert_documents_equal(&original, &restored, "all_types_kexd");
+    }
+
+    #[test]
+    fn shuttle_kexd_roundtrip() {
+        let data = load_test_file("shuttle_kexd");
+        let original = deserialize(&data).expect("Failed to deserialize shuttle_kexd");
+
+        let serialized = serialize(&original);
+        let restored = deserialize(&serialized).expect("Failed to deserialize round-tripped data");
+
+        assert_documents_equal(&original, &restored, "shuttle_kexd");
+    }
+
+    #[test]
+    fn circuit_kexd_builds_track() {
+        use crate::track::evaluate_graph;
+
+        let data = load_test_file("circuit_kexd");
+        let doc = deserialize(&data).expect("Failed to deserialize circuit_kexd");
+
+        let result = evaluate_graph(&doc.as_view()).expect("circuit_kexd evaluation failed");
+        assert!(
+            !result.paths.is_empty(),
+            "circuit_kexd should produce track paths"
+        );
+        assert!(
+            !result.anchors.is_empty(),
+            "circuit_kexd should have anchors"
+        );
+    }
+
+    #[test]
+    fn switch_kexd_builds_track() {
+        use crate::track::evaluate_graph;
+
+        let data = load_test_file("switch_kexd");
+        let doc = deserialize(&data).expect("Failed to deserialize switch_kexd");
+
+        let result = evaluate_graph(&doc.as_view()).expect("switch_kexd evaluation failed");
+        assert!(
+            !result.paths.is_empty(),
+            "switch_kexd should produce track paths"
+        );
+        assert!(
+            !result.anchors.is_empty(),
+            "switch_kexd should have anchors"
+        );
+    }
+
+    #[test]
+    fn all_types_kexd_builds_track() {
+        use crate::track::evaluate_graph;
+
+        let data = load_test_file("all_types_kexd");
+        let doc = deserialize(&data).expect("Failed to deserialize all_types_kexd");
+
+        let result = evaluate_graph(&doc.as_view()).expect("all_types_kexd evaluation failed");
+        assert!(
+            !result.paths.is_empty(),
+            "all_types_kexd should produce track paths"
+        );
+        assert!(
+            !result.anchors.is_empty(),
+            "all_types_kexd should have anchors"
+        );
+    }
+
+    #[test]
+    fn shuttle_kexd_builds_track() {
+        use crate::track::evaluate_graph;
+
+        let data = load_test_file("shuttle_kexd");
+        let doc = deserialize(&data).expect("Failed to deserialize shuttle_kexd");
+
+        let result = evaluate_graph(&doc.as_view()).expect("shuttle_kexd evaluation failed");
+        assert!(
+            !result.paths.is_empty(),
+            "shuttle_kexd should produce track paths"
+        );
+        assert!(
+            !result.anchors.is_empty(),
+            "shuttle_kexd should have anchors"
+        );
+    }
 }
