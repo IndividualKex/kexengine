@@ -20,6 +20,7 @@
 
 pub mod graph;
 pub mod nodes;
+pub mod persistence;
 pub mod sim;
 pub mod track;
 
