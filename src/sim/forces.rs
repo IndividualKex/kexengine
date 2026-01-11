@@ -33,7 +33,8 @@ impl Forces {
 
         let force_vec = Float3::UP
             + frame.lateral * (velocity * physics::HZ * lateral_angle / physics::G)
-            + frame.normal * (heart_advance * physics::HZ * physics::HZ * normal_angle / physics::G);
+            + frame.normal
+                * (heart_advance * physics::HZ * physics::HZ * normal_angle / physics::G);
 
         Self::new(-force_vec.dot(frame.normal), -force_vec.dot(frame.lateral))
     }

@@ -1,4 +1,6 @@
-use crate::sim::{evaluate, physics, Curvature, Float3, Forces, Frame, Keyframe, Point, Quaternion};
+use crate::sim::{
+    evaluate, physics, Curvature, Float3, Forces, Frame, Keyframe, Point, Quaternion,
+};
 
 const MAX_ITERATIONS: usize = 1_000_000;
 

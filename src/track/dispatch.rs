@@ -1,5 +1,5 @@
-use crate::sim::{Float3, Point};
 use crate::nodes::{DurationType, IterationConfig, NodeType, PropertyId};
+use crate::sim::{Float3, Point};
 
 use super::document::DocumentView;
 use super::result::EvaluationResult;

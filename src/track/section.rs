@@ -1,8 +1,8 @@
 use std::collections::HashMap;
 
 use crate::graph::{Graph, PortDataType};
-use crate::sim::Point;
 use crate::nodes::PropertyId;
+use crate::sim::Point;
 
 use super::dispatch::node_meta;
 use super::document::DocumentView;
@@ -748,8 +748,14 @@ mod tests {
         // Node 2 has priority 5, node 3 has priority 10
         // Priority is stored in scalars (floats), not flags
         let mut scalars = HashMap::new();
-        scalars.insert(crate::track::document::input_key(2, node_meta::PRIORITY), 5.0);
-        scalars.insert(crate::track::document::input_key(3, node_meta::PRIORITY), 10.0);
+        scalars.insert(
+            crate::track::document::input_key(2, node_meta::PRIORITY),
+            5.0,
+        );
+        scalars.insert(
+            crate::track::document::input_key(3, node_meta::PRIORITY),
+            10.0,
+        );
 
         let doc = DocumentView {
             graph: &graph,
@@ -789,8 +795,14 @@ mod tests {
         // Node 2 has priority 5, node 3 has priority -1 (cosmetic)
         // Priority is stored in scalars (floats), not flags
         let mut scalars = HashMap::new();
-        scalars.insert(crate::track::document::input_key(2, node_meta::PRIORITY), 5.0);
-        scalars.insert(crate::track::document::input_key(3, node_meta::PRIORITY), -1.0);
+        scalars.insert(
+            crate::track::document::input_key(2, node_meta::PRIORITY),
+            5.0,
+        );
+        scalars.insert(
+            crate::track::document::input_key(3, node_meta::PRIORITY),
+            -1.0,
+        );
 
         let doc = DocumentView {
             graph: &graph,

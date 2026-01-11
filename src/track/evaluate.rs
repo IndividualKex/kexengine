@@ -53,7 +53,19 @@ mod tests {
 
     #[test]
     fn evaluate_empty_graph() {
-        let graph = Graph::from_vecs(vec![], vec![], vec![], vec![], vec![], vec![], vec![], vec![], vec![], vec![], vec![]);
+        let graph = Graph::from_vecs(
+            vec![],
+            vec![],
+            vec![],
+            vec![],
+            vec![],
+            vec![],
+            vec![],
+            vec![],
+            vec![],
+            vec![],
+            vec![],
+        );
         let scalars = HashMap::new();
         let vectors = HashMap::new();
         let flags = HashMap::new();
@@ -74,8 +86,8 @@ mod tests {
     /// - Path from ReversePath (which gets it from Geo's path output)
     #[test]
     fn evaluate_cosmetic_copypath_chain() {
-        use crate::graph::PortSpec;
         use crate::graph::PortDataType;
+        use crate::graph::PortSpec;
 
         // C# node type values (from dispatch.rs map_csharp_node_type):
         // Anchor=7, Geometric=3, Reverse=8, ReversePath=9, CopyPath=5
@@ -106,23 +118,30 @@ mod tests {
         let mut next_port_id = 100u32;
 
         // Track specific port IDs for edges
-        let mut anchor6_out = 0u32;
-        let mut geo1_anchor_in = 0u32;
-        let mut geo1_anchor_out = 0u32;
-        let mut geo1_path_out = 0u32;
-        let mut reverse7_anchor_in = 0u32;
-        let mut reverse7_anchor_out = 0u32;
-        let mut rpath14_path_in = 0u32;
-        let mut rpath14_path_out = 0u32;
-        let mut copypath8_anchor_in = 0u32;
-        let mut copypath8_path_in = 0u32;
-        let mut copypath8_anchor_out = 0u32;
-        let mut geo3_anchor_in = 0u32;
+        let anchor6_out;
+        let geo1_anchor_in;
+        let geo1_anchor_out;
+        let geo1_path_out;
+        let reverse7_anchor_in;
+        let reverse7_anchor_out;
+        let rpath14_path_in;
+        let rpath14_path_out;
+        let copypath8_anchor_in;
+        let copypath8_path_in;
+        let copypath8_anchor_out;
+        let geo3_anchor_in;
 
         // Node 6 (Anchor): 8 inputs (Position, Roll, Pitch, Yaw, Velocity, Heart, Friction, Resistance), 1 output (Anchor)
         for i in 0..8 {
             port_ids.push(next_port_id);
-            port_types.push(encode_port(if i == 0 { PortDataType::Vector } else { PortDataType::Scalar }, i as u8));
+            port_types.push(encode_port(
+                if i == 0 {
+                    PortDataType::Vector
+                } else {
+                    PortDataType::Scalar
+                },
+                i as u8,
+            ));
             port_owners.push(6);
             port_is_input.push(true);
             next_port_id += 1;
@@ -256,7 +275,7 @@ mod tests {
         port_types.push(encode_port(PortDataType::Path, 0));
         port_owners.push(3);
         port_is_input.push(false);
-        next_port_id += 1;
+        let _ = next_port_id;
 
         // Edges:
         // 1. Anchor(6) -> Geo(1): anchor6_out -> geo1_anchor_in
@@ -323,25 +342,57 @@ mod tests {
 
         // Check that all nodes got evaluated
         // Anchor node (6) should produce an anchor
-        assert!(result.anchors.contains_key(&6), "Anchor node 6 should produce an anchor");
+        assert!(
+            result.anchors.contains_key(&6),
+            "Anchor node 6 should produce an anchor"
+        );
 
         // Geo node (1) should produce an anchor and a path
-        assert!(result.anchors.contains_key(&1), "Geo node 1 should produce an anchor");
-        assert!(result.paths.contains_key(&1), "Geo node 1 should produce a path");
+        assert!(
+            result.anchors.contains_key(&1),
+            "Geo node 1 should produce an anchor"
+        );
+        assert!(
+            result.paths.contains_key(&1),
+            "Geo node 1 should produce a path"
+        );
 
         // Reverse node (7) should produce an anchor (no path)
-        assert!(result.anchors.contains_key(&7), "Reverse node 7 should produce an anchor");
+        assert!(
+            result.anchors.contains_key(&7),
+            "Reverse node 7 should produce an anchor"
+        );
 
         // ReversePath node (14) should produce an anchor and a path
-        assert!(result.anchors.contains_key(&14), "ReversePath node 14 should produce an anchor");
-        assert!(result.paths.contains_key(&14), "ReversePath node 14 should produce a path");
+        assert!(
+            result.anchors.contains_key(&14),
+            "ReversePath node 14 should produce an anchor"
+        );
+        assert!(
+            result.paths.contains_key(&14),
+            "ReversePath node 14 should produce a path"
+        );
 
         // CopyPath cosmetic (8) should produce an anchor and a path
-        assert!(result.anchors.contains_key(&8), "CopyPath node 8 should produce an anchor. anchors: {:?}", result.anchors.keys().collect::<Vec<_>>());
-        assert!(result.paths.contains_key(&8), "CopyPath node 8 should produce a path. paths: {:?}", result.paths.keys().collect::<Vec<_>>());
+        assert!(
+            result.anchors.contains_key(&8),
+            "CopyPath node 8 should produce an anchor. anchors: {:?}",
+            result.anchors.keys().collect::<Vec<_>>()
+        );
+        assert!(
+            result.paths.contains_key(&8),
+            "CopyPath node 8 should produce a path. paths: {:?}",
+            result.paths.keys().collect::<Vec<_>>()
+        );
 
         // Geo cosmetic (3) should produce an anchor and a path
-        assert!(result.anchors.contains_key(&3), "Geo cosmetic node 3 should produce an anchor");
-        assert!(result.paths.contains_key(&3), "Geo cosmetic node 3 should produce a path");
+        assert!(
+            result.anchors.contains_key(&3),
+            "Geo cosmetic node 3 should produce an anchor"
+        );
+        assert!(
+            result.paths.contains_key(&3),
+            "Geo cosmetic node 3 should produce a path"
+        );
     }
 }

@@ -98,6 +98,13 @@ pub struct KexOutput {
 /// Build track from document data.
 ///
 /// Single FFI call: document in → track out.
+///
+/// # Safety
+///
+/// - `doc` must be a valid pointer to a properly initialized `KexDocument`
+/// - `output` must be a valid pointer to a `KexOutput` with sufficient capacity
+/// - All array pointers in `doc` must be valid for their respective counts
+/// - Output buffer pointers must be valid and have capacity >= their `*_capacity` fields
 #[no_mangle]
 pub unsafe extern "C" fn kex_build(
     doc: *const KexDocument,
@@ -154,7 +161,14 @@ pub unsafe extern "C" fn kex_build(
     );
 
     // Create document view
-    let doc_view = DocumentView::new(&graph, &scalars, &vectors, &flags, &keyframes, &keyframe_ranges);
+    let doc_view = DocumentView::new(
+        &graph,
+        &scalars,
+        &vectors,
+        &flags,
+        &keyframes,
+        &keyframe_ranges,
+    );
 
     // Evaluate graph (topological sort + node evaluation)
     let eval_result = match evaluate_graph(&doc_view) {
@@ -195,7 +209,7 @@ pub unsafe extern "C" fn kex_build(
 
     // Generate spline data and update section spline indices
     let mut spline_offset = 0usize;
-    for (_i, section) in sections.iter_mut().enumerate() {
+    for section in sections.iter_mut() {
         if !section.is_valid() {
             continue;
         }
